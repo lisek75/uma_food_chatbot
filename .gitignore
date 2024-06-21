@@ -1,0 +1,9 @@
+# Ignore executable files
+*.exe
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+
+# Ignore .gitattributes file
+.gitattributes
