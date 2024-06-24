@@ -32,12 +32,12 @@ async def read_root(request: Request):
     """
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.get("/about_project.html")
-async def read_about_project(request: Request):
+@app.get("/learn_more.html")
+async def read_learn_more(request: Request):
     """
-    Render the about_project.html template.
+    Render the learn_more.html template.
     """
-    return templates.TemplateResponse("about_project.html", {"request": request})
+    return templates.TemplateResponse("learn_more.html", {"request": request})
 
 # Define a route for the webhook endpoint
 @app.post("/")

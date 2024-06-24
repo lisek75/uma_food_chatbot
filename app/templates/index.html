@@ -9,18 +9,30 @@
     <link rel="icon" href="/static/images/favicon.ico" type="image/x-icon">
 </head>
 <body>
-    <header class="bg-danger text-white text-center py-4">
-        <h1>UMA Food Chatbot</h1>
-    </header>
-    <main class="container my-3">
+    <!-- Introductory section -->
+    <section class="intro-section">
+        <div class="container text-center">
+            <h2>Simplify restaurant orders using Dialogflow AI</h2>
+            <p>The UMA Food Chatbot Project uses Dialogflow and FastAPI to improve ordering and order management for a Japanese restaurant with an AI chatbot</p>
+        </div>
+        <!-- Scroll indicator -->
+        <div class="scroll-indicator">
+            <a id="scroll-btn" href="#main-content"></a>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <main id="main-content" class="container my-3">
+        <!-- Menu section -->
         <section class="menu">
-            <h2 class="text-center text-danger">Menu</h2>
+            <h2 class="text-center">Menu</h2>
             <div class="row">
+                <!-- Individual menu items (cards) -->
                 <div class="col-md-4">
                     <div class="card mb-4">
                         <img src="/static/images/tuna_sushi.jpg" class="card-img-top" alt="Tuna Sushi">
                         <div class="card-body text-center">
-                            <h5 class="card-title text-danger">Tuna Sushi</h5>
+                            <h6 class="card-title">Tuna Sushi</h6>
                             <p class="card-text">$6.00</p>
                         </div>
                     </div>
@@ -29,7 +41,7 @@
                     <div class="card mb-4">
                         <img src="/static/images/salmon_sushi.jpg" class="card-img-top" alt="Salmon Sushi">
                         <div class="card-body text-center">
-                            <h5 class="card-title text-danger">Salmon Sushi</h5>
+                            <h6 class="card-title">Salmon Sushi</h6>
                             <p class="card-text">$7.00</p>
                         </div>
                     </div>
@@ -38,22 +50,27 @@
                     <div class="card mb-4">
                         <img src="/static/images/chirasi.jpg" class="card-img-top" alt="Chirasi">
                         <div class="card-body text-center">
-                            <h5 class="card-title text-danger">Chirasi</h5>
+                            <h6 class="card-title">Chirasi</h6>
                             <p class="card-text">$8.00</p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
-        <section class="about-project">
-            <h2 class="text-center text-danger">About the UMA Food Chatbot project</h2>
-            <div id="about-project-content"></div>
+
+        <!-- Learn more section -->
+        <section class="learn-more">
+            <h2 class="text-center">Learn More</h2>
+            <div id="learn-more-content"></div>
         </section>
     </main>
-    <footer class="bg-danger text-white text-center py-3">
-        <p>UMA Food Chatbot Project (V1.0). Made with 💚</p>
+
+    <!-- Footer -->
+    <footer class="ext-white text-center py-3">
+        <p>V1.0 UMA Food Chatbot Project Made with 💚</p>
     </footer>
-    <!-- Chatbot integration -->
+
+    <!-- Chatbot container -->
     <div class="chatbot-container">
         <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
         <df-messenger
@@ -63,19 +80,34 @@
             language-code="en"
         ></df-messenger>
     </div>
-    <!-- Triggering the welcome intent on chat load -->
+
+    <!-- Scripts -->
     <script>
+        // Event listener for when DF Messenger is loaded
         window.addEventListener('dfMessengerLoaded', function(event) {
             const dfMessenger = document.querySelector('df-messenger');
         });
-    </script>
-   <script>
-        // Load the content of about_project.html into the div
-        fetch('/about_project.html')
+
+        // Smooth scrolling to main content
+        document.querySelector('a[href="#main-content"]').addEventListener('click', function(e) {
+            e.preventDefault();
+            const mainContent = document.getElementById('main-content');
+            if (mainContent) {
+                mainContent.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+
+        // Fetch and populate learn more section content
+        fetch('/learn_more.html')
             .then(response => response.text())
             .then(data => {
-                document.getElementById('about-project-content').innerHTML = data;
+                document.getElementById('learn-more-content').innerHTML = data;
             });
     </script>
+
+    <!-- jQuery, Popper.js, and Bootstrap JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
