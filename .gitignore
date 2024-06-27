@@ -7,3 +7,7 @@ __pycache__/
 
 # Ignore .gitattributes file
 .gitattributes
+
+# Ignore the virtual environment directory
+.venv/
+

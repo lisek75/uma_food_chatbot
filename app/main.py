@@ -122,7 +122,7 @@ async def new_order(session_id: str, parameters: dict = None) -> dict:
         dict: A dictionary containing the fulfillment text response.
     """
     try:
-        print(f"Order before clearing session: {active_orders_sessions.get(session_id, 'No existing session')}") # Debugging
+        print(f"Order before clearing session: {active_orders_sessions.get(session_id, 'No existing order')}") # Debugging
 
         # Clear the current session
         active_orders_sessions[session_id] = {}
@@ -349,7 +349,6 @@ async def complete_order(session_id: str, parameters: dict) -> dict:
         print(f"Error in complete_order: {e}")
         return {"fulfillmentText": "There was an error completing the order. Please try again."}
 
-@print_active_sessions
 async def track_order(session_id: str, parameters: dict) -> dict:
     """
     Handle the 'track.order - context: ongoing-tracking' intent by providing the status of a specific order.

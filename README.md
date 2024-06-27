@@ -32,12 +32,6 @@ uma_food_chatbot/
 ### Prerequisites
 
 - Python 3.8 or higher
-- FastAPI
-- Uvicorn
-- Dialogflow
-- ngrok
-- Jinja2 (for templates)
-- MySQL (MySQL Workbench)
 
 
 ### Installation
@@ -45,15 +39,15 @@ uma_food_chatbot/
 1. **Clone the repository**:
 
     ```sh
-    git clone https://github.com/lizk75/uma_food_chatbot.git
+    git clone https://github.com/lisek75/uma_food_chatbot.git
     cd uma_food_chatbot
     ```
 
 2. **Create and activate a virtual environment**:
 
     ```sh
-    python -m venv venv
-    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+    python -m venv .venv
+    .venv\Scripts\activate # On MacOS/Linux source .venv/bin/activate
     ```
 
 3. **Install the dependencies**:
