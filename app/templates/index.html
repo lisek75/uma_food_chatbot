@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMA Food ChatBot</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="icon" href="/static/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <!-- Header -->
+    <header class="text-dark p-3 text-center">
+        <div class="container">
+            <div class="d-flex flex-column align-items-center">
+                <div class="intro">
+                    <h2>Simplify restaurant orders using Dialogflow AI 🤖 </h2>
+                    <p>The UMA Food Chatbot Project uses Dialogflow and FastAPI to improve ordering and order management for a Japanese restaurant with an AI chatbot</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main id="main-content" class="container my-3">
+        <!-- Menu section -->
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="/static/images/tuna_sushi.jpg" class="card-img-top" alt="Tuna Sushi">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Tuna Sushi</h6>
+                        <p class="card-text">$6.00</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="/static/images/salmon_sushi.jpg" class="card-img-top" alt="Salmon Sushi">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Salmon Sushi</h6>
+                        <p class="card-text">$7.00</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="/static/images/chirasi.jpg" class="card-img-top" alt="Chirasi">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Chirasi</h6>
+                        <p class="card-text">$8.00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Learn more section -->
+        <section class="my-4">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title">Learn More</h2>
+                    <div id="learn-more-content" class="learn-more"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-dark text-center py-3">
+        <p>UMA Food Chatbot Project Made with 💚</p>
+    </footer>
+
+    <!-- Chatbot container -->
+    <div class="chatbot-container">
+        <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+        <df-messenger
+            intent="WELCOME"
+            chat-title="🤖🍣Uma Bot"
+            agent-id="cfb5e6ec-7ece-4ded-b203-34678f650978"
+            language-code="en"
+        ></df-messenger>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Event listener for when DF Messenger is loaded
+        window.addEventListener('dfMessengerLoaded', function(event) {
+            const dfMessenger = document.querySelector('df-messenger');
+        });
+
+        // Fetch and populate learn more section content
+        fetch('/learn_more.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('learn-more-content').innerHTML = data;
+            });
+    </script>
+
+    <!-- jQuery, Popper.js, and Bootstrap JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

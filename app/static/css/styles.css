@@ -1,0 +1,62 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: url('/static/images/background.jpg') no-repeat center center fixed;
+    background-size: cover;
+}
+
+header, main, footer {
+    padding: 20px;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.8);
+    margin: 20px;
+    border-radius: 10px;
+}
+
+footer {
+    backdrop-filter: blur(5px);
+}
+
+.learn-more {
+    text-align: left;
+    padding: 15px;
+}
+
+.learn-more h4 {
+    margin-top: 20px;
+}
+
+.learn-more ul {
+    padding-left: 20px;
+}
+
+.learn-more p, .learn-more ul {
+    margin-bottom: 20px;
+}
+
+/* Additional styling for the chatbot iframe */
+.chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    border: none; 
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: #ffffff;
+}
+
+.chatbot-container iframe {
+    border: none;
+}
+
+df-messenger {
+    --df-messenger-button-titlebar-color: #000000;  /* titlebar and bg icon*/
+}
+
+
+
+
+
+
+
