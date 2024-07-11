@@ -368,14 +368,11 @@ async def complete_order(session_id: str, parameters: dict) -> dict:
         print(f"Order to insert in db: {current_order}")  # Debugging
 
         # Save the order into the database
-        new_order_id = db_helper.save_order_to_db(current_order)
+        new_order_id, total_order_price  = db_helper.save_order_to_db(current_order)
 
         if new_order_id:
-            # If the order is saved, calculate the total price
-            total_order_price = db_helper.calculate_order_total_price(new_order_id)
              # Clear the session after saving the order
             del active_orders_sessions[session_id]
-
             # Set the fulfillment text with order details
             fulfillment_text = (
                 f"Awesome 🎉! We have placed your order id {new_order_id}. "

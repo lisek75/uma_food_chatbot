@@ -93,16 +93,18 @@ def does_food_item_exist(food_item: str) -> bool:
     return bool(result)
 
 
-def save_order_to_db(order: dict) -> int:
+def save_order_to_db(order: dict) -> tuple:
     """
     Save the order details to the database, 
-    and return an int: The new order ID if the operation is successful, 0 otherwise.
+    and return a tuple: (The new order ID, Total order price) if the operation is successful, (0, 0) otherwise.
     """
     # Get the current maximum order_id from the orders table
     query = "SELECT MAX(order_id) FROM orders"
     result = execute_query(query)
     max_order_id = result[0][0] if result else None
-    new_order_id = 1 if max_order_id is None else max_order_id + 1 # None means the orders table is empty
+    new_order_id = 1 if max_order_id is None else max_order_id + 1  # None means the orders table is empty
+
+    total_order_price = 0  # Initialize total order price
 
     # Iterate over the order dictionary and process each item
     for item_name, quantity in order.items():
@@ -110,16 +112,17 @@ def save_order_to_db(order: dict) -> int:
         query = "SELECT item_id, price FROM food_items WHERE name = %s"
         result = execute_query(query, (item_name,))
         if not result:
-            return 0
+            return 0, 0
 
         item_id, price = result[0]
         total_price = price * quantity
+        total_order_price += total_price  # Add to the total order price
 
         # Insert the new order into the orders table
         query = "INSERT INTO orders (order_id, item_id, quantity, total_price) VALUES (%s, %s, %s, %s)"
         if not execute_non_query(query, (new_order_id, item_id, quantity, total_price)):
             print(f"Failed to insert order for item '{item_name}'")
-            return 0
+            return 0, 0
 
         print(f"{item_name} : ID({item_id}), Price: ${price}, Quantity : {quantity}, Total Price : {total_price}")
 
@@ -127,33 +130,9 @@ def save_order_to_db(order: dict) -> int:
     query = "INSERT INTO order_tracking (order_id, status) VALUES (%s, %s)"
     if not execute_non_query(query, (new_order_id, 'in progress')):
         print(f"Failed to insert order tracking for order ID '{new_order_id}'")
-        return 0
+        return 0, 0
 
-    return new_order_id
-
-
-def calculate_order_total_price(order_id: int) -> float:
-    """
-    Calculate the total price for the given order_id and update the orders table.
-    """
-    query = "SELECT item_id, quantity FROM orders WHERE order_id = %s"
-    items = execute_query(query, (order_id,))
-    if not items:
-        return 0
-
-    total_order_price = 0
-
-    for item_id, quantity in items:
-        query = "SELECT price FROM food_items WHERE item_id = %s"
-        result = execute_query(query, (item_id,))
-        if not result:
-            return 0
-        price = result[0][0]
-        total_price = price * quantity
-        total_order_price += total_price
-
-    return total_order_price
-
+    return new_order_id, total_order_price
 
 def get_order_status(order_id):
     """
