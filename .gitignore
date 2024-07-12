@@ -11,3 +11,5 @@ __pycache__/
 # Ignore the virtual environment directory
 .venv/
 
+# Ignore the .env file containing environment variables
+.env

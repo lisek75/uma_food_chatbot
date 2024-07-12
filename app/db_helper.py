@@ -1,4 +1,9 @@
+import os
+from dotenv import load_dotenv
 import mysql.connector
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 def get_db_connection():
@@ -7,10 +12,10 @@ def get_db_connection():
     """
     # Database connection details
     db_config = {
-        'user': 'root',
-        'password': 'root',
-        'host': 'localhost',
-        'database': 'uma_food_chatbot'
+        'user': os.getenv('DB_USER'),
+        'password': os.getenv('DB_PASSWORD'),
+        'host': os.getenv('DB_HOST'),
+        'database': os.getenv('DB_NAME')
     }
     try:
         connection = mysql.connector.connect(**db_config)

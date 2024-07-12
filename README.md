@@ -2,6 +2,8 @@
 
 This chatbot, designed for a Japanese restaurant named UMA, leverages Dialogflow's Natural Language Processing (NLP) capabilities to assist users in managing their orders seamlessly. The chatbot supports adding or removing items, completing orders, and tracking order status in real-time, making the ordering process efficient and interactive.
 
+Deployed App: [Uma Bot](https://uma-bot.onrender.com/)
+
 ## 📂 Project Structure
 
 uma_food_chatbot/
@@ -40,7 +42,8 @@ uma_food_chatbot/
 
     ```sh
     python -m venv .venv
-    .venv/Scripts/activate # On MacOS/Linux source .venv/bin/activate
+    .venv\Scripts\activate  # On Windows
+    source .venv/bin/activate  # On MacOS/Linux
     ```
 
 3. **Install the dependencies**:
@@ -54,27 +57,15 @@ uma_food_chatbot/
 
 1. **Install MySQL**:
 
-    Download and install MySQL from the [official website](https://dev.mysql.com/downloads/installer/). MySQL Workbench is included in the MySQL installer package.
+    Download and install MySQL from the [official website](https://dev.mysql.com/downloads/installer/). 
+    - MySQL Workbench is included in the installer package.
+    - Alternatively, use another client for database management (e.g.,phpMyAdmin, HeidiSQL...)
 
 
-3. **Import the Database Schema**:
+3. **Configure and Import Database Schema**:
 
-    - Open MySQL Workbench and connect to your MySQL server. Create a new MySQL server with username `root`, password `root`, and host `localhost` if working locally.
-    - Update `app/db_helper.py` in the `get_db_connection()` function to match your configuration:
-
-        ```python
-        db_config = {
-            'user': 'root',
-            'password': 'root',
-            'host': 'localhost',
-            'database': 'uma_food_chatbot'
-        }
-        ```
-    - Import `uma_food_chatbot.sql` from the `setup` folder:
-        - Go to `Server > Data Import`.
-        - Select `Import from Self-Contained File`.
-        - Browse and select the `uma_food_chatbot.sql` file.
-        - Click `Start Import` to import the database with all tables.
+    - Rename `.env_sample` to `.env` and and update the environment variables with your configuration.
+    - Import `uma_food_chatbot.sql` from the `setup` folder using the client's import feature.
 
 
 ### 🚀 Running the Application
@@ -98,15 +89,10 @@ uma_food_chatbot/
     ngrok http --domain=your-custom-domain.ngrok-free.app 8000
     ```
 
-    Example:
-
-    ```sh
-    ngrok http --domain=classic-intensely-seal.ngrok-free.app 8000
-    ```
 
 4. **Access the application**:
 
-    Go to `http://127.0.0.1:<port>`, for example: `http://127.0.0.1:8000`.
+    If you run the app locally, go  to `http://127.0.0.1:<port>`, for example: `http://127.0.0.1:8000`.
 
 ## 💻 Usage
 
