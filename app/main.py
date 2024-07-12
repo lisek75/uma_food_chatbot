@@ -7,6 +7,10 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from app import db_helper, generic_helper
+import logging
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
 
 # Debugging purpose
 def print_orders_sessions(func):
@@ -15,7 +19,7 @@ def print_orders_sessions(func):
     """
     async def wrapper(*args, **kwargs):
         result = await func(*args, **kwargs)
-        print(f"Orders Sessions: {active_orders_sessions}")
+        logging.info(f"Orders Sessions: {active_orders_sessions}")
         return result
     return wrapper
 
@@ -36,7 +40,7 @@ async def cleanup_inactive_sessions():
         for session_id in inactive_sessions:
             del active_orders_sessions[session_id]
             del last_activity_times[session_id]
-            print(f"Session {session_id} has been cleaned up due to inactivity.")
+            logging.info(f"Session {session_id} has been cleaned up due to inactivity.")
 
 # Lifespan context manager
 @asynccontextmanager
@@ -57,7 +61,7 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            print(f"Unexpected error during shutdown: {e}")
+            logging.info(f"Unexpected error during shutdown: {e}")
 
 # Create a FastAPI app instance
 app = FastAPI(lifespan=lifespan)
@@ -101,7 +105,7 @@ async def webhook_handler(request: Request):
         # Extract the session id
         outputs_contexts = query_result.get('outputContexts', [{}])[0].get('name', '')
         session_id = generic_helper.extract_session_id(outputs_contexts)
-        print(f"My Session: {session_id}")  # Debugging
+        logging.info(f"My Session: {session_id}")  # Debugging
 
         # Map intent names to their respective handler functions
         intent_handlers = {
@@ -116,13 +120,13 @@ async def webhook_handler(request: Request):
 
         # Call the appropriate handler function based on the intent name
         if intent_name in intent_handlers:
-            print(f"Webhook call: {intent_name} is successful.")  # Debugging
+            logging.info(f"Webhook call: {intent_name} is successful.")  # Debugging
             return await intent_handlers[intent_name](session_id, parameters)
 
         # Default response if the intent is not recognized
         return {"fulfillmentText": "Sorry, I didn't understand that request."}
     except Exception as e:
-        print(f"Error in webhook_handler: {e}")
+        logging.info(f"Error in webhook_handler: {e}")
         return {"fulfillmentText": "There was an error processing the request. Please try again."}
 
 async def get_menu(session_id: str = None, parameters: dict = None) -> dict:
@@ -138,7 +142,7 @@ async def get_menu(session_id: str = None, parameters: dict = None) -> dict:
         return {"fulfillmentText": fulfillment_text}
     except Exception as e:
         # Handle any exceptions that occur and return an error message
-        print(f"Error in get_menu: {e}")
+        logging.info(f"Error in get_menu: {e}")
         return {"fulfillmentText": "There was an error retrieving the menu. Please try again."}
 
 @print_orders_sessions
@@ -165,7 +169,7 @@ async def new_order(session_id: str, parameters: dict = None) -> dict:
         return {"fulfillmentText": fulfillment_text}
     except Exception as e:
         # Handle any exceptions that occur and return an error message
-        print(f"Error in new_order: {e}")
+        logging.info(f"Error in new_order: {e}")
         return {"fulfillmentText": "There was an error starting a new order. Please try again."}
 
 @print_orders_sessions
@@ -205,8 +209,8 @@ async def add_item_to_order(session_id: str, parameters: dict) -> dict:
             else:
                 non_existing_items_in_db.append(item)
 
-        print(f"Valid Food Items: {valid_food_items}")  # Debugging
-        print(f"None Valid Food Items: {non_existing_items_in_db}")  # Debugging
+        logging.info(f"Valid Food Items: {valid_food_items}")  # Debugging
+        logging.info(f"None Valid Food Items: {non_existing_items_in_db}")  # Debugging
 
         fulfillment_text = ""
 
@@ -227,7 +231,7 @@ async def add_item_to_order(session_id: str, parameters: dict) -> dict:
                 # Add a new entry with the provided session_id and food dictionary
                 active_orders_sessions[session_id] = valid_food_items
 
-            print(f"Current Order: {active_orders_sessions.get(session_id)}")  # Debugging
+            logging.info(f"Current Order: {active_orders_sessions.get(session_id)}")  # Debugging
 
             # Update the last activity time
             last_activity_times[session_id] = current_time
@@ -242,7 +246,7 @@ async def add_item_to_order(session_id: str, parameters: dict) -> dict:
         return {"fulfillmentText": fulfillment_text}
     except Exception as e:
         # Handle any exceptions that occur and return an error message
-        print(f"Error in add_item_to_order: {e}")
+        logging.info(f"Error in add_item_to_order: {e}")
         return {"fulfillmentText": "There was an error adding items to the order. Please try again."}
 
 async def remove_item_from_order(session_id: str, parameters: dict) -> dict:
@@ -273,10 +277,10 @@ async def remove_item_from_order(session_id: str, parameters: dict) -> dict:
             else:
                 not_found_items.append(item)
 
-        print(f"Current Order: {current_order}")  # Debugging
-        print(f"{len(not_found_items)} items not found: {not_found_items}")  # Debugging
-        print(f"{len(removed_items)} items removed: {removed_items}")  # Debugging
-        print(f"Current Order updated:{current_order}")  # Debugging
+        logging.info(f"Current Order: {current_order}")  # Debugging
+        logging.info(f"{len(not_found_items)} items not found: {not_found_items}")  # Debugging
+        logging.info(f"{len(removed_items)} items removed: {removed_items}")  # Debugging
+        logging.info(f"Current Order updated:{current_order}")  # Debugging
 
         fulfillment_text = ""
 
@@ -319,7 +323,7 @@ async def remove_item_from_order(session_id: str, parameters: dict) -> dict:
         return {"fulfillmentText": fulfillment_text}
     except Exception as e:
         # Handle any exceptions that occur and return an error message
-        print(f"Error in remove_item_from_order: {e}")
+        logging.info(f"Error in remove_item_from_order: {e}")
         return {"fulfillmentText": "There was an error removing items from the order. Please try again."}
 
 async def prompt_confirm_order(session_id: str, parameters: dict) -> dict:
@@ -337,7 +341,7 @@ async def prompt_confirm_order(session_id: str, parameters: dict) -> dict:
         return {"fulfillmentText": fulfillment_text}
     except Exception as e:
         # Handle any exceptions that occur and return an error message
-        print(f"Error in complete_order: {e}")
+        logging.info(f"Error in complete_order: {e}")
         return {"fulfillmentText": "There was an error confirming the order. Please try again."}
 
 async def complete_order(session_id: str, parameters: dict) -> dict:
@@ -365,7 +369,7 @@ async def complete_order(session_id: str, parameters: dict) -> dict:
         # Remove the 'confirmed' key from the order before saving to the database
         if 'confirmed' in current_order:
             del current_order['confirmed']
-        print(f"Order to insert in db: {current_order}")  # Debugging
+        logging.info(f"Order to insert in db: {current_order}")  # Debugging
 
         # Save the order into the database
         new_order_id, total_order_price  = db_helper.save_order_to_db(current_order)
@@ -385,7 +389,7 @@ async def complete_order(session_id: str, parameters: dict) -> dict:
         return {"fulfillmentText": fulfillment_text}
     except Exception as e:
         # Handle any exceptions that occur and return an error message
-        print(f"Error in complete_order: {e}")
+        logging.info(f"Error in complete_order: {e}")
         return {"fulfillmentText": "There was an error completing the order. Please try again."}
 
 async def track_order(session_id: str, parameters: dict) -> dict:
@@ -403,5 +407,5 @@ async def track_order(session_id: str, parameters: dict) -> dict:
 
         return {"fulfillmentText": fulfillment_text}
     except Exception as e:
-        print(f"Error in track_order: {e}")
+        logging.info(f"Error in track_order: {e}")
         return {"fulfillmentText": "There was an error tracking the order. Please try again."}
