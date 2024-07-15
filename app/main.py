@@ -104,7 +104,7 @@ async def webhook_handler(request: Request):
 
         # Extract the session id
         outputs_contexts = query_result.get('outputContexts', [{}])[0].get('name', '')
-        session_id = generic_helper.extract_session_id(outputs_contexts)
+        session_id = await generic_helper.extract_session_id(outputs_contexts)
         logging.info(f"My Session: {session_id}")  # Debugging
 
         # Map intent names to their respective handler functions
@@ -114,7 +114,8 @@ async def webhook_handler(request: Request):
             'order.add - context: ongoing-order': add_item_to_order,
             'order.remove - context: ongoing-order': remove_item_from_order,
             'order.prompt_confirm - context: ongoing-order': prompt_confirm_order,
-            'order.complete_confirm - context: ongoing-order': complete_order,
+            'order.cancel - context: ongoing-order': cancel_order,
+            'order.complete - context: ongoing-order': complete_order,
             'track.order - context: ongoing-tracking': track_order,
         }
 
@@ -134,7 +135,7 @@ async def get_menu(session_id: str = None, parameters: dict = None) -> dict:
     Retrieves the menu items from the database and returns them in a formatted response
     """
     try:
-        menu_items = db_helper.get_menu_items()
+        menu_items = await db_helper.get_menu_items()
         fulfillment_text = (
             f" Menu 🍣: {', '.join(menu_items)}."
             " Specify items and quantities (e.g., 2 Tuna Sushi, 1 Chirasi)."
@@ -154,14 +155,14 @@ async def new_order(session_id: str, parameters: dict = None) -> dict:
         # Check if there is an existing order for the session ID
         if session_id in active_orders_sessions and active_orders_sessions[session_id]:
             # Get the order items and quantities
-            order_items_qty = generic_helper.get_order_items_qty(active_orders_sessions, session_id)
+            order_items_qty = await generic_helper.get_order_items_qty(active_orders_sessions, session_id)
             fulfillment_text = (
                 f" 🛒 You have an existing order: 🍣 {order_items_qty}."
                 " Do you need something else?"
             )
         else:
-            # If no existing order, get the menu items from the database
-            menu_response = db_helper.get_menu_items()
+            # Get the menu items from the database
+            menu_response = await db_helper.get_menu_items()
             fulfillment_text = (
                 "New order started 🍱. What can I get for you?"
                 f" Here is the menu 🍣: {', '.join(menu_response)} "
@@ -204,7 +205,7 @@ async def add_item_to_order(session_id: str, parameters: dict) -> dict:
 
         # Iterate over the food items and their corresponding quantities
         for item, qty in food_dict.items():
-            if db_helper.does_food_item_exist(item):
+            if await db_helper.does_food_item_exist(item):
                 valid_food_items[item] = int(qty)
             else:
                 non_existing_items_in_db.append(item)
@@ -237,7 +238,7 @@ async def add_item_to_order(session_id: str, parameters: dict) -> dict:
             last_activity_times[session_id] = current_time
 
             # Get the order items and quantities
-            order_items_qty = generic_helper.get_order_items_qty(active_orders_sessions, session_id)
+            order_items_qty = await generic_helper.get_order_items_qty(active_orders_sessions, session_id)
             fulfillment_text += (
                 f" So far, you have in your cart: 🍣 {order_items_qty}."
                 " Do you need something else?"
@@ -245,7 +246,6 @@ async def add_item_to_order(session_id: str, parameters: dict) -> dict:
 
         return {"fulfillmentText": fulfillment_text}
     except Exception as e:
-        # Handle any exceptions that occur and return an error message
         logging.info(f"Error in add_item_to_order: {e}")
         return {"fulfillmentText": "There was an error adding items to the order. Please try again."}
 
@@ -256,12 +256,10 @@ async def remove_item_from_order(session_id: str, parameters: dict) -> dict:
     try:
         if session_id not in active_orders_sessions:
             return {"fulfillmentText": "Couldn't find an active order. Please start a new one by saying 'New Order'🍱."}
-        
-        # Retrieve the current order
-        current_order = active_orders_sessions.get(session_id)
 
-        # Extract the food items to remove
-        items_to_remove = parameters.get('food-item', [])
+        current_order = active_orders_sessions.get(session_id) # Retrieve the current order
+
+        items_to_remove = parameters.get('food-item', [])  # Extract the food items to remove
 
         # Lists to track items to remove and items not found in the order
         removed_items = []
@@ -291,7 +289,7 @@ async def remove_item_from_order(session_id: str, parameters: dict) -> dict:
         if not_found_items:
             for item in not_found_items:
                 # Check if there are any items doesn't exist in db
-                if db_helper.does_food_item_exist(item):
+                if await db_helper.does_food_item_exist(item):
                     existing_items_in_db.append(item)
                 else:
                     non_existing_items_in_db.append(item)
@@ -314,7 +312,7 @@ async def remove_item_from_order(session_id: str, parameters: dict) -> dict:
             fulfillment_text += " Your order is empty."
         else:
             # Get the quantity of items remaining in the order
-            order_items_qty = generic_helper.get_order_items_qty(active_orders_sessions, session_id)
+            order_items_qty = await generic_helper.get_order_items_qty(active_orders_sessions, session_id)
             fulfillment_text += (
                 f" So far, you have in your cart: 🍣 {order_items_qty}."
                 " Do you need something else?"
@@ -322,7 +320,6 @@ async def remove_item_from_order(session_id: str, parameters: dict) -> dict:
 
         return {"fulfillmentText": fulfillment_text}
     except Exception as e:
-        # Handle any exceptions that occur and return an error message
         logging.info(f"Error in remove_item_from_order: {e}")
         return {"fulfillmentText": "There was an error removing items from the order. Please try again."}
 
@@ -334,71 +331,59 @@ async def prompt_confirm_order(session_id: str, parameters: dict) -> dict:
         if session_id not in active_orders_sessions:
             return {"fulfillmentText": "I can't find your order. Sorry! Please say 'New Order' to place it again."}
         else:
-            order_items_qty = generic_helper.get_order_items_qty(active_orders_sessions, session_id)
+            order_items_qty = await generic_helper.get_order_items_qty(active_orders_sessions, session_id)
             fulfillment_text = (
                 f"All right! 🛒 In your cart: {order_items_qty}. Please confirm your order by saying 'Confirm' or 'Cancel'?"
             )
         return {"fulfillmentText": fulfillment_text}
     except Exception as e:
-        # Handle any exceptions that occur and return an error message
         logging.info(f"Error in complete_order: {e}")
         return {"fulfillmentText": "There was an error confirming the order. Please try again."}
 
-async def complete_order(session_id: str, parameters: dict) -> dict:
+async def cancel_order(session_id: str, parameters: dict) -> dict:
     """
-    Completes the order for the session after confirmation
+    Cancels the order for the given session
     """
     try:
-        if session_id not in active_orders_sessions:
-            return {"fulfillmentText": "I can't find your order. Sorry! Please say 'New Order' to place it again."}
+        order_items_qty = await generic_helper.get_order_items_qty(active_orders_sessions, session_id)
+        return {"fulfillmentText": f"Your order has not been confirmed 🛒: {order_items_qty}. Do you need something else?"}
 
-        # Retrieve confirmation parameter from user's response
-        confirmation = parameters.get('confirmation')
+    except Exception as e:
+        logging.info(f"Error in complete_order: {e}")
+        return {"fulfillmentText": "There was an error completing the order. Please try again."}
 
-        # Check if the confirmation value is true or false
-        if confirmation == 'true':
-            active_orders_sessions[session_id]['confirmed'] = True
-        else:
-            active_orders_sessions[session_id]['confirmed'] = False
-            order_items_qty = generic_helper.get_order_items_qty(active_orders_sessions, session_id)
-            return {"fulfillmentText": f"Your order has not been confirmed 🛒: {order_items_qty}. Do you need something else?"}
-
-        # Retrieve the current order 
-        current_order = active_orders_sessions.get(session_id)
-
-        # Remove the 'confirmed' key from the order before saving to the database
-        if 'confirmed' in current_order:
-            del current_order['confirmed']
+async def complete_order(session_id: str, parameters: dict) -> dict:
+    """
+    Completes the order for the given session
+    """
+    try:
+        current_order = active_orders_sessions.get(session_id) # Retrieve the order 
         logging.info(f"Order to insert in db: {current_order}")  # Debugging
 
         # Save the order into the database
-        new_order_id, total_order_price  = db_helper.save_order_to_db(current_order)
+        new_order_id, total_order_price  = await db_helper.save_order_to_db(current_order)
 
         if new_order_id:
-             # Clear the session after saving the order
-            del active_orders_sessions[session_id]
-            # Set the fulfillment text with order details
+            del active_orders_sessions[session_id] # Clear the session
             fulfillment_text = (
                 f"Awesome 🎉! We have placed your order id {new_order_id}. "
                 f" Your order total is ${total_order_price:.2f} which you can pay at the time of delivery 📦."
             )
         else:
-            # If there was an error saving the order, inform the user
             fulfillment_text = "Error placing order. Please try again. Say 'New Order.'"
 
         return {"fulfillmentText": fulfillment_text}
     except Exception as e:
-        # Handle any exceptions that occur and return an error message
         logging.info(f"Error in complete_order: {e}")
         return {"fulfillmentText": "There was an error completing the order. Please try again."}
 
 async def track_order(session_id: str, parameters: dict) -> dict:
     """
-    Provide the status of a specific order based on the provided order ID.
+    Provide the status of a specific order ID
     """
     try:
         order_id = int(parameters['order_id'])
-        order_status = db_helper.get_order_status(order_id)
+        order_status = await db_helper.get_order_status(order_id)
 
         if order_status:
             fulfillment_text = f"The order {order_id} is {order_status}."
