@@ -15,7 +15,7 @@ async def get_order_items_qty(active_order_sessions: dict, session_id: str) -> s
     """
     order = active_order_sessions.get(session_id, {})
     if not order:
-        return "No items in the order."
+        return "No items in the order"
 
     order_items_qty = ", ".join([f"{quantity} {item}" for item, quantity in order.items()])
     return order_items_qty
