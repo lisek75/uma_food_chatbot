@@ -110,7 +110,6 @@ async def webhook_handler(request: Request):
         # Map intent names to their respective handler functions
         intent_handlers = {
             'new.order': new_order,
-            'get.menu - context: ongoing-order': get_menu,
             'order.add - context: ongoing-order': add_item_to_order,
             'order.remove - context: ongoing-order': remove_item_from_order,
             'order.prompt_confirm - context: ongoing-order': prompt_confirm_order,
@@ -128,23 +127,7 @@ async def webhook_handler(request: Request):
         return {"fulfillmentText": "Sorry, I didn't understand that request."}
     except Exception as e:
         logging.info(f"Error in webhook_handler: {e}")
-        return {"fulfillmentText": "There was an error processing the request. Please try again."}
-
-async def get_menu(session_id: str = None, parameters: dict = None) -> dict:
-    """
-    Retrieves the menu items from the database and returns them in a formatted response
-    """
-    try:
-        menu_items = await db_helper.get_menu_items()
-        fulfillment_text = (
-            f" Menu 🍣: {', '.join(menu_items)}."
-            " Specify items and quantities (e.g., 2 Tuna Sushi, 1 Chirasi)."
-        )
-        return {"fulfillmentText": fulfillment_text}
-    except Exception as e:
-        # Handle any exceptions that occur and return an error message
-        logging.info(f"Error in get_menu: {e}")
-        return {"fulfillmentText": "There was an error retrieving the menu. Please try again."}
+        return {"fulfillmentText": "❗There was an error processing the request. Please try again."}
 
 @print_orders_sessions
 async def new_order(session_id: str, parameters: dict = None) -> dict:
@@ -154,24 +137,100 @@ async def new_order(session_id: str, parameters: dict = None) -> dict:
     try:
         # Check if there is an existing order for the session ID
         if session_id in active_orders_sessions and active_orders_sessions[session_id]:
-            # Get the order items and quantities
             order_items_qty = await generic_helper.get_order_items_qty(active_orders_sessions, session_id)
-            fulfillment_text = (
-                f" 🛒 You have an existing order: 🍣 {order_items_qty}."
-                " Do you need something else?"
-            )
+            response = {
+                "fulfillmentMessages": [
+                    {
+                        "text": {
+                            "text": [
+                                f"🛒 You have an existing order: {order_items_qty}. Do you need something else?"
+                            ]
+                        }
+                    },
+                    {
+                        "payload": {
+                            "richContent": [
+                                [
+                                    {
+                                        "type": "chips",
+                                        "options": [
+                                            {
+                                                "text": "Yes"
+                                            },
+                                            {
+                                                "text": "No"
+                                            },
+                                            {
+                                                "text": "Show Menu 📋"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
         else:
-            # Get the menu items from the database
-            menu_response = await db_helper.get_menu_items()
-            fulfillment_text = (
-                "New order started 🍱. What can I get for you?"
-                f" Here is the menu 🍣: {', '.join(menu_response)} "
-            )
-        return {"fulfillmentText": fulfillment_text}
+            response = {
+                "fulfillmentMessages": [
+                    {
+                        "text": {
+                            "text": ["New order started 🛒. What can I get for you?"]
+                        }
+                    },
+                    {
+                        "payload": {
+                            "richContent": [
+                                [
+                                    {
+                                        "type": "chips",
+                                        "options": [
+                                            {
+                                                "text": "Show Menu 📋"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+        return response
     except Exception as e:
-        # Handle any exceptions that occur and return an error message
         logging.info(f"Error in new_order: {e}")
-        return {"fulfillmentText": "There was an error starting a new order. Please try again."}
+        response = {
+            "fulfillmentMessages": [
+                {
+                    "text": {
+                        "text": [
+                            "❗There was an error tracking the order. Please try again."
+                        ]
+                    }
+                },
+                {
+                    "payload": {
+                        "richContent": [
+                            [
+                                {
+                                    "type": "chips",
+                                    "options": [
+                                        {
+                                            "text": "Order 🛒"
+                                        },
+                                        {
+                                            "text": "Menu 📋"
+                                        }
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
+                }
+            ]
+        }
+        return response
 
 @print_orders_sessions
 async def add_item_to_order(session_id: str, parameters: dict) -> dict:
@@ -185,20 +244,22 @@ async def add_item_to_order(session_id: str, parameters: dict) -> dict:
         food_items = parameters.get('food-item', [])
         add_qty = parameters.get('qty', [])
 
-        # If food items or quantities are missing, prompt the user to specify them
-        if not food_items or not add_qty:
-            return {
-                "fulfillmentText": "Please specify the food item along with the quantity (e.g., 2 Tuna Sushi, 1 Chirasi) 🍣",
-            }
-
-         # Initialize a list to store non-existing items in database
-        non_existing_items_in_db = []
-
-        # Initialize a dictionary to store valid food items and their quantities
-        valid_food_items = {}
+        non_existing_items_in_db = [] # List of non-existing items in db
+        valid_food_items = {} # Dictionary of valid items and their quantities
 
         if len(food_items) != len(add_qty):
-            return {"fulfillmentText": "Please specify items and quantities (e.g., 2 Tuna Sushi, 1 Chirasi)."}
+            response = {
+                    "fulfillmentMessages": [
+                        {
+                            "text": {
+                                "text": [
+                                   "Please specify items and quantities 🍣 (e.g., 2 Tuna Sushi, 1 Chirasi)."
+                                ]
+                            }
+                        }
+                    ]
+                }
+            return response
 
         add_qty = [int(q) for q in add_qty]  # Convert quantities to integers
         food_dict = dict(zip(food_items, add_qty))  # Create the food dictionary
@@ -219,7 +280,6 @@ async def add_item_to_order(session_id: str, parameters: dict) -> dict:
         if non_existing_items_in_db:
             fulfillment_text = (
                 f"Sorry, these items aren't available: 🚫{', '.join(non_existing_items_in_db)}."
-                " You can say 'Menu'🍣 to show list of items."
             )
 
         # Check if there are valid food items
@@ -240,14 +300,82 @@ async def add_item_to_order(session_id: str, parameters: dict) -> dict:
             # Get the order items and quantities
             order_items_qty = await generic_helper.get_order_items_qty(active_orders_sessions, session_id)
             fulfillment_text += (
-                f" So far, you have in your cart: 🍣 {order_items_qty}."
+                f" So far, you have in your cart: 🛒 {order_items_qty}."
                 " Do you need something else?"
             )
+        # Add custom payload with buttons
+        response = {
+            "fulfillmentMessages": [
+                {
+                    "text": {
+                        "text": [
+                            fulfillment_text
+                        ]
+                    }
+                },
+                {
+                    "payload": {
+                        "richContent": [
+                            [
+                                {
+                                    "type": "chips",
+                                    "options": [
+                                        {
+                                            "text": "I need something else 🍽️"
+                                        },
+                                        {
+                                            "text": "Show the menu 📋" 
+                                        },
+                                        {
+                                            "text": "I'm good with my order ✅"
+                                        },
+                                        {
+                                            "text": "Remove items 🗑️"
+                                        }
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
+                }
+            ]
+        }
 
-        return {"fulfillmentText": fulfillment_text}
+        return response
     except Exception as e:
         logging.info(f"Error in add_item_to_order: {e}")
-        return {"fulfillmentText": "There was an error adding items to the order. Please try again."}
+        response = {
+            "fulfillmentMessages": [
+                {
+                    "text": {
+                        "text": [
+                             "❗There was an error adding items to the order. Please try again."
+                        ]
+                    }
+                },
+                {
+                    "payload": {
+                        "richContent": [
+                            [
+                                {
+                                    "type": "chips",
+                                    "options": [
+                                        {
+                                            "text": "Order 🛒"
+                                        },
+                                        {
+                                            "text": "Menu 📋"
+                                        }
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
+                }
+            ]
+        }
+        return response
+
 
 async def remove_item_from_order(session_id: str, parameters: dict) -> dict:
     """
@@ -255,7 +383,37 @@ async def remove_item_from_order(session_id: str, parameters: dict) -> dict:
     """
     try:
         if session_id not in active_orders_sessions:
-            return {"fulfillmentText": "Couldn't find an active order. Please start a new one by saying 'New Order'🍱."}
+            response = {
+                "fulfillmentMessages": [
+                    {
+                        "text": {
+                            "text": [
+                                "Couldn't find an active order. Please start a new one 🍣."
+                            ]
+                        }
+                    },
+                    {
+                        "payload": {
+                            "richContent": [
+                                [
+                                    {
+                                        "type": "chips",
+                                        "options": [
+                                            {
+                                                "text": "New Order 🛒"
+                                            },
+                                            {
+                                                "text": "Show Menu 📋"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+            return response
 
         current_order = active_orders_sessions.get(session_id) # Retrieve the current order
 
@@ -297,19 +455,18 @@ async def remove_item_from_order(session_id: str, parameters: dict) -> dict:
             if non_existing_items_in_db:
                 fulfillment_text = (
                     f"These items aren't available: 🚫{', '.join(non_existing_items_in_db)}."
-                    " You can say 'Menu'🍣 to show list of items."
                 )
 
             if existing_items_in_db:
-                fulfillment_text += (f"Your current order does not have: {', '.join(existing_items_in_db)}.")
+                fulfillment_text += (f"Your current order 🛒 does not have: {', '.join(existing_items_in_db)}.")
 
         # Check if there are any items that were successfully removed from the current order
         if removed_items:
-            fulfillment_text += f" Removed {', '.join(removed_items)} from your order."
+            fulfillment_text += f"🗑️ Removed {', '.join(removed_items)} from your order."
 
         # Check if the current order is now empty
         if not current_order:  # len(current_order.keys()) == 0
-            fulfillment_text += " Your order is empty."
+            fulfillment_text += " Your order is empty. Do you need something else?"
         else:
             # Get the quantity of items remaining in the order
             order_items_qty = await generic_helper.get_order_items_qty(active_orders_sessions, session_id)
@@ -318,10 +475,78 @@ async def remove_item_from_order(session_id: str, parameters: dict) -> dict:
                 " Do you need something else?"
             )
 
-        return {"fulfillmentText": fulfillment_text}
+        # Add custom payload with buttons
+        response = {
+            "fulfillmentMessages": [
+                {
+                    "text": {
+                        "text": [
+                            fulfillment_text
+                        ]
+                    }
+                },
+                {
+                    "payload": {
+                        "richContent": [
+                            [
+                                {
+                                    "type": "chips",
+                                    "options": [
+                                        {
+                                            "text": "I need something else 🍽️"
+                                        },
+                                        {
+                                            "text": "Show the menu 📋"
+                                        },
+                                        {
+                                            "text": "I'm good with my order ✅"
+                                        },
+                                        {
+                                            "text": "Remove items 🗑️"
+                                        }
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
+                }
+            ]
+        }
+
+        return response
     except Exception as e:
         logging.info(f"Error in remove_item_from_order: {e}")
-        return {"fulfillmentText": "There was an error removing items from the order. Please try again."}
+        response = {
+            "fulfillmentMessages": [
+                {
+                    "text": {
+                        "text": [
+                            "❗There was an error removing items from the order. Please try again."
+                        ]
+                    }
+                },
+                {
+                    "payload": {
+                        "richContent": [
+                            [
+                                {
+                                    "type": "chips",
+                                    "options": [
+                                        {
+                                            "text": "Order 🛒"
+                                        },
+                                        {
+                                            "text": "Menu 📋"
+                                        }
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
+                }
+            ]
+        }
+        return response
 
 async def prompt_confirm_order(session_id: str, parameters: dict) -> dict:
     """
@@ -329,28 +554,220 @@ async def prompt_confirm_order(session_id: str, parameters: dict) -> dict:
     """
     try:
         if session_id not in active_orders_sessions:
-            return {"fulfillmentText": "I can't find your order. Sorry! Please say 'New Order' to place it again."}
+            response = {
+                "fulfillmentMessages": [
+                    {
+                        "text": {
+                            "text": [
+                                "I can't find your order. Sorry! 😔 Please place it again."
+                            ]
+                        }
+                    },
+                    {
+                        "payload": {
+                            "richContent": [
+                                [
+                                    {
+                                        "type": "chips",
+                                        "options": [
+                                            {
+                                                "text": "New Order 🛒"
+                                            },
+                                            {
+                                                "text": "Menu 📋"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+            return response
         else:
-            order_items_qty = await generic_helper.get_order_items_qty(active_orders_sessions, session_id)
-            fulfillment_text = (
-                f"All right! 🛒 In your cart: {order_items_qty}. Please confirm your order by saying 'Confirm' or 'Cancel'?"
-            )
-        return {"fulfillmentText": fulfillment_text}
+            current_order = active_orders_sessions.get(session_id)  # Retrieve the order
+
+            # Check if the order is empty
+            if not current_order or len(current_order) == 0:
+                fulfillment_text = "Your order is empty. Do you need something else?"
+                options = [
+                    {"text": "I need something else"},
+                    {"text": "Show Menu 📋"}
+                ]
+            else:
+                order_items_qty = await generic_helper.get_order_items_qty(active_orders_sessions, session_id)
+                fulfillment_text = f"All right! 🛒 You have {order_items_qty} in your cart. Please confirm your order."
+                options = [
+                    {"text": "Confirm ✅"},
+                    {"text": "Cancel ❌"}
+                ]
+            response = {
+                "fulfillmentMessages": [
+                    {
+                        "text": {
+                            "text": [
+                                fulfillment_text
+                            ]
+                        }
+                    },
+                    {
+                        "payload": {
+                            "richContent": [
+                                [
+                                    {
+                                        "type": "chips",
+                                        "options": options
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+            return response
     except Exception as e:
-        logging.info(f"Error in complete_order: {e}")
-        return {"fulfillmentText": "There was an error confirming the order. Please try again."}
+        logging.info(f"Error in prompt_confirm_order: {e}")
+        response = {
+            "fulfillmentMessages": [
+                {
+                    "text": {
+                        "text": [
+                             "❗There was an error confirming the order. Please try again."
+                        ]
+                    }
+                },
+                {
+                    "payload": {
+                        "richContent": [
+                            [
+                                {
+                                    "type": "chips",
+                                    "options": [
+                                        {
+                                            "text": "Order 🛒"
+                                        },
+                                        {
+                                            "text": "Menu 📋"
+                                        }
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
+                }
+            ]
+        }
+        return response
 
 async def cancel_order(session_id: str, parameters: dict) -> dict:
     """
     Cancels the order for the given session
     """
     try:
-        order_items_qty = await generic_helper.get_order_items_qty(active_orders_sessions, session_id)
-        return {"fulfillmentText": f"Your order has not been confirmed 🛒: {order_items_qty}. Do you need something else?"}
+        current_order = active_orders_sessions.get(session_id)  # Retrieve the order
+        logging.info(f"current order cancel : {current_order}")
+
+        # Check if the order is empty
+        if not current_order or len(current_order) == 0:
+            response = {
+                "fulfillmentMessages": [
+                    {
+                        "text": {
+                            "text": [
+                                "Your order is empty. Please add items to your cart."
+                            ]
+                        }
+                    },
+                    {
+                        "payload": {
+                            "richContent": [
+                                [
+                                    {
+                                        "type": "chips",
+                                        "options": [
+                                            {
+                                                "text": "Menu 📋"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+            return response
+        else:
+            order_items_qty = await generic_helper.get_order_items_qty(active_orders_sessions, session_id)
+            response = {
+                "fulfillmentMessages": [
+                    {
+                        "text": {
+                            "text": [
+                                f"Your order has not been confirmed: {order_items_qty}🛒 Do you need something else?"
+                            ]
+                        }
+                    },
+                    {
+                        "payload": {
+                            "richContent": [
+                                [
+                                    {
+                                        "type": "chips",
+                                        "options": [
+                                            {
+                                                "text": "Yes"
+                                            },
+                                            {
+                                                "text": "No"
+                                            },
+                                            {
+                                                "text": "Menu 📋"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+            return response
 
     except Exception as e:
-        logging.info(f"Error in complete_order: {e}")
-        return {"fulfillmentText": "There was an error completing the order. Please try again."}
+        logging.info(f"Error in cancel_order: {e}")
+        response = {
+            "fulfillmentMessages": [
+                {
+                    "text": {
+                        "text": [
+                            "❗There was an error cancelling the order. Please try again."
+                        ]
+                    }
+                },
+                {
+                    "payload": {
+                        "richContent": [
+                            [
+                                {
+                                    "type": "chips",
+                                    "options": [
+                                        {
+                                            "text": "Order 🛒"
+                                        },
+                                        {
+                                            "text": "Menu 📋"
+                                        }
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
+                }
+            ]
+        }
+        return response
 
 async def complete_order(session_id: str, parameters: dict) -> dict:
     """
@@ -360,22 +777,146 @@ async def complete_order(session_id: str, parameters: dict) -> dict:
         current_order = active_orders_sessions.get(session_id) # Retrieve the order 
         logging.info(f"Order to insert in db: {current_order}")  # Debugging
 
+        # Check if the order is empty
+        if not current_order or len(current_order) == 0:
+            response = {
+                "fulfillmentMessages": [
+                    {
+                        "text": {
+                            "text": [
+                                "Your order is empty. Please add items to your cart before completing the order."
+                            ]
+                        }
+                    },
+                    {
+                        "payload": {
+                            "richContent": [
+                                [
+                                    {
+                                        "type": "chips",
+                                        "options": [
+                                            {
+                                                "text": "Menu 📋"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+            return response
+
         # Save the order into the database
         new_order_id, total_order_price  = await db_helper.save_order_to_db(current_order)
 
         if new_order_id:
             del active_orders_sessions[session_id] # Clear the session
-            fulfillment_text = (
-                f"Awesome 🎉! We have placed your order id {new_order_id}. "
-                f" Your order total is ${total_order_price:.2f} which you can pay at the time of delivery 📦."
-            )
+            response = {
+                "fulfillmentMessages": [
+                    {
+                        "text": {
+                            "text": [
+                                f"Awesome 🎉! We have placed your order id {new_order_id}. "
+                                f" Your order total is ${total_order_price:.2f} which you can pay at the time of delivery 📦."
+                            ]
+                        }
+                    },
+                    {
+                        "payload": {
+                            "richContent": [
+                                [
+                                    {
+                                        "type": "chips",
+                                        "options": [
+                                        {
+                                            "text": "Menu 📋"
+                                        },
+                                        {
+                                            "text": "New order 🛒"
+                                        },
+                                        {
+                                            "text": "Track status 🚚"
+                                        },
+                                        {
+                                            "text": "Opening hours 🕒"
+                                        }
+                                        ]
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+            return response
         else:
-            fulfillment_text = "Error placing order. Please try again. Say 'New Order.'"
+            response = {
+                "fulfillmentMessages": [
+                    {
+                        "text": {
+                            "text": [
+                                "❗Error placing order. Please try again."
+                            ]
+                        }
+                    },
+                    {
+                        "payload": {
+                            "richContent": [
+                                [
+                                    {
+                                        "type": "chips",
+                                        "options": [
+                                            {
+                                                "text": "Order 🛒"
+                                            },
+                                            {
+                                                "text": "Menu 📋"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+            return response
 
-        return {"fulfillmentText": fulfillment_text}
     except Exception as e:
         logging.info(f"Error in complete_order: {e}")
-        return {"fulfillmentText": "There was an error completing the order. Please try again."}
+        response = {
+            "fulfillmentMessages": [
+                {
+                    "text": {
+                        "text": [
+                            "❗There was an error completing the order. Please try again."
+                        ]
+                    }
+                },
+                {
+                    "payload": {
+                        "richContent": [
+                            [
+                                {
+                                    "type": "chips",
+                                    "options": [
+                                        {
+                                            "text": "Order 🛒"
+                                        },
+                                        {
+                                            "text": "Menu 📋"
+                                        }
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
+                }
+            ]
+        }
+        return response
 
 async def track_order(session_id: str, parameters: dict) -> dict:
     """
@@ -386,11 +927,80 @@ async def track_order(session_id: str, parameters: dict) -> dict:
         order_status = await db_helper.get_order_status(order_id)
 
         if order_status:
-            fulfillment_text = f"The order {order_id} is {order_status}."
+            fulfillment_text = f"📦 The order {order_id} is {order_status}."
         else:
-            fulfillment_text = f"The order {order_id} doesn't exist."
+            fulfillment_text = f"📦 The order {order_id} doesn't exist."
 
-        return {"fulfillmentText": fulfillment_text}
+        # Add custom payload with buttons
+        response = {
+            "fulfillmentMessages": [
+                {
+                    "text": {
+                        "text": [
+                            fulfillment_text
+                        ]
+                    }
+                },
+                {
+                    "payload": {
+                        "richContent": [
+                            [
+                                {
+                                    "type": "chips",
+                                    "options": [
+                                        {
+                                            "text": "Menu 📋"
+                                        },
+                                        {
+                                            "text": "New order 🛒"
+                                        },
+                                        {
+                                            "text": "Order status 🚚"
+                                        },
+                                        {
+                                            "text": "Opening hours 🕒"
+                                        }
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
+                }
+            ]
+        }
+
+        return response
     except Exception as e:
         logging.info(f"Error in track_order: {e}")
-        return {"fulfillmentText": "There was an error tracking the order. Please try again."}
+        response = {
+            "fulfillmentMessages": [
+                {
+                    "text": {
+                        "text": [
+                             "❗There was an error tracking the order. Please try again."
+                        ]
+                    }
+                },
+                {
+                    "payload": {
+                        "richContent": [
+                            [
+                                {
+                                    "type": "chips",
+                                    "options": [
+                                        {
+                                            "text": "Status 🚚"
+                                        },
+                                        {
+                                            "text": "Order 🛒"
+                                        }
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
+                }
+            ]
+        }
+        return response
+

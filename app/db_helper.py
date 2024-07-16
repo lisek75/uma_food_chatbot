@@ -62,14 +62,6 @@ async def execute_non_query(query, params=None):
     finally:
         connection.close()
 
-async def get_menu_items():
-    """
-    Fetch the list of available menu items from the database.
-    """
-    query = "SELECT name FROM food_items"
-    result = await execute_query(query)
-    return [item[0] for item in result] if result else []
-
 async def does_food_item_exist(food_item: str) -> bool:
     """
     Check if the given food item exists in the food_items table,
