@@ -4,6 +4,7 @@
         in managing their orders seamlessly. 
         The chatbot supports adding or removing items, completing orders, and tracking order status in real-time, 
         making the ordering process efficient and interactive.</p>
+    
     <h4>📋 Basic Knowledge Requirements</h4>
     <ul>
         <li>Understanding <strong>Basic Python Programming</strong> such as functions, dictionaries, 
@@ -11,86 +12,55 @@
         <li>Familiarity with <strong>FastAPI</strong> for building <strong>APIs</strong>.</li>
         <li>Basic knowledge of <strong>MySQL</strong> for database operations.</li>
         <li>Understand <strong>Dialogflow</strong> and handle <strong>JSON data</strong>.</li>
-      </ul>
+    </ul>
 
     <h4>🔑 Key Learnings</h4>
     <ul>
         <li>Create and manage <strong>intents</strong> and <strong>entities</strong> in Dialogflow 
-            to handle various user interactions.</li>
-        <li>Use <strong>NLP</strong> to interpret and respond to user inputs in a conversational manner.</li>
-        <li>Handle <strong>webhook requests</strong> from Dialogflow using <strong>FastAPI</strong> 
-            to perform backend operations.</li>
+            using <strong>NLP</strong> to handle user interactions.</li>
+        <li>Handle <strong>webhook requests</strong> from Dialogflow using <strong>FastAPI</strong> </li>
         <li>Interact with a <strong>MySQL database</strong> to manage orders and food items.</li>
-        <li>Manage <strong>user sessions</strong> to ensure data consistency throughout the conversation.</li>
-      </ul>
+        <li>Manage <strong>user sessions</strong> to ensure data consistency.</li>
+        <li>Implement <strong>async operations</strong> for better performance and handling multiple requests.</li>
+    </ul>
 
-    <h4>📖 Story Behind the Code</h4>
-    <p>Here's the story of how the UMA Chatbot leverages Dialogflow's AI capabilities to manage orders 
-        for a Japanese restaurant:</p>
+    <h4>📖 Short Story Behind the Code</h4>
     <ul>
         <li><strong>Webhook Handling:</strong>
             <ul>
-                <li>The chatbot receives incoming webhook requests from Dialogflow, processes the payload, 
-                    and extracts necessary information such as intent names, entities, and parameters.</li>
-                <li>It routes the requests to appropriate functions based on the intent, ensuring that user 
-                    interactions are handled correctly.</li>
+                <li>The chatbot processes incoming webhook requests from Dialogflow, extracts information (intent, entities, parameters), and routes requests to appropriate functions.</li>
             </ul>
         </li>
         <li><strong>New Order:</strong>
             <ul>
-                <li>When a user initiates a new order by saying something like "I want to start a new order", 
-                    the chatbot clears any existing session data to start fresh.</li>
-                <li>It provides a list of available items, guiding the user to specify their desired food items 
-                    and quantities using recognized entities.</li>
+                <li>On initiating a new order, the chatbot clears existing session data and provides a list of available items, guiding the user to specify their desired food items and quantities.</li>
             </ul>
         </li>
-        <li><strong>Add Items:</strong>
+        <li><strong>Add/Remove Items:</strong>
             <ul>
-                <li>Users can add items to their order by specifying the food items and quantities, e.g., 
-                    "Add 2 Tuna Sushi to my order"</li>
-                <li>The chatbot uses NLP to identify the food items and quantities, checks if the items 
-                    exist in the database, and updates the current session accordingly.</li>
-            </ul>
-        </li>
-        <li><strong>Remove Items:</strong>
-            <ul>
-                <li>Users can remove items from their order by saying something like "Remove 1 Salmon Sushi".</li>
-                <li>The chatbot identifies the items to be removed, updates the session, and provides 
-                    feedback on the current order status.</li>
+                <li>Users can add or remove items by specifying the food and quantity. The chatbot updates the session based on the recognized items and quantities.</li>
             </ul>
         </li>
         <li><strong>Complete Orders:</strong>
             <ul>
-                <li>Once the user indicates they don't need anything else, the chatbot prompts the user for confirmation.</li>
-                <li>If the user confirms by saying "I confirm," the order is saved in the database, 
-                    the total price is calculated, and the order is confirmed. The session data is then cleared.</li>
-                <li>If the user cancels, the order is not completed, and the user can continue modifying the order.</li>
+                <li>The chatbot prompts for confirmation to complete orders, saves the order in the database, calculates the total price, and clears session data upon confirmation.</li>
             </ul>
         </li>
         <li><strong>Track Orders:</strong>
             <ul>
-                <li>Users can track the status of their orders by asking, "What's the status of my order?"</li>
-                <li>The chatbot retrieves the order status from the database and informs the user, 
-                    leveraging Dialogflow's ability to manage context and session parameters.</li>
-                <li>If you want to test the chatbot on this intent, you can use the order id 40 or 41.</li>
+                <li>Users can inquire about order status, and the chatbot retrieves the status from the database and informs the user.</li>
             </ul>
         </li>
         <li><strong>Database Helper Functions:</strong>
             <ul>
-                <li>The project includes helper functions for database interactions, such as checking 
-                    if an item exists, saving orders, and calculating total prices.</li>
-                <li>These functions ensure efficient data handling and provide a seamless experience for users.</li>
+                <li>Functions ensure efficient data handling, such as checking item existence, saving orders, and calculating prices.</li>
             </ul>
         </li>
         <li><strong>Session Management:</strong>
             <ul>
-                <li>The application maintains active sessions and their last activity times 
-                    to track and manage user interactions.</li>
-                <li>Periodic cleanup tasks run to remove inactive sessions, 
-                    ensuring resource efficiency and up-to-date session data.</li>
+                <li>The application tracks and manages user interactions with active sessions and periodically cleans up inactive sessions for resource efficiency.</li>
             </ul>
         </li>
-
     </ul>
 
     <h4>🔗 GitHub Repository</h4>
