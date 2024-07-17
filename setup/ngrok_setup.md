@@ -30,11 +30,6 @@ Ngrok is necessary if you do not have an HTTPS URL, as Dialogflow requires a sec
     ngrok http --domain=your-custom-domain.ngrok-free.app 8000
     ```
 
-    Example :
-    ```sh
-    ngrok http --domain=classic-intensely-seal.ngrok-free.app 8000
-    ```
-
 ### Step 5: Get the HTTPS URL
 
 1. Once Ngrok is running, it will display the forwarding addresses.

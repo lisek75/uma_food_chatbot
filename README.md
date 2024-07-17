@@ -1,6 +1,6 @@
 # 🍣 Uma Chatbot for food
 
-This chatbot, designed for a Japanese restaurant named UMA, leverages Dialogflow's Natural Language Processing (NLP) capabilities to assist users in managing their orders seamlessly. The chatbot supports adding or removing items, completing orders, and tracking order status in real-time, making the ordering process efficient and interactive.
+This UMA chatbot uses Dialogflow Natural Language Processing (NLP) to manage orders, add/remove items, complete orders, and track status in real-time for efficient ordering.
 
 Deployed App: [Uma Bot](https://uma-bot.onrender.com/)
 
@@ -64,7 +64,7 @@ uma_food_chatbot/
 
 3. **Configure and Import Database Schema**:
 
-    - Rename `.env_sample` to `.env` and and update the environment variables with your configuration.
+    - Rename `.env_sample` to `.env` and update the environment variables with your configuration.
     - Import `uma_food_chatbot.sql` from the `setup` folder using the client's import feature.
 
 
@@ -80,7 +80,7 @@ uma_food_chatbot/
 
 2. **Install and setup Dialogflow and ngrok**:
 
-    Refer to the `setup/dialogflow_setup.md` and `setup/ngrok_setup.md` files for detailed instructions on setting up Dialogflow and ngrok.
+    Refer to the `setup/dialogflow` and `setup/ngrok_setup.md` for detailed instructions on setting up Dialogflow and ngrok.
 
 3. **Run ngrok**:
     Use this if you are running the application locally and do not have HTTPS.
@@ -89,10 +89,10 @@ uma_food_chatbot/
     ngrok http --domain=your-custom-domain.ngrok-free.app 8000
     ```
 
-
 4. **Access the application**:
 
     If you run the app locally, go  to `http://127.0.0.1:<port>`, for example: `http://127.0.0.1:8000`.
+
 
 ## 💻 Usage
 
