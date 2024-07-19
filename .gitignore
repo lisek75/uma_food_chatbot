@@ -13,3 +13,6 @@ __pycache__/
 
 # Ignore the .env file containing environment variables
 .env
+
+# Ignore the .drawio file
+*.drawio
