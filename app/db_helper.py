@@ -10,7 +10,6 @@ async def get_db_connection():
     """
     Establish a connection to the database and return an aiomysql connection object.
     """
-    # Database connection details
     db_config = {
         'user': os.getenv('DB_USER'),
         'password': os.getenv('DB_PASSWORD'),
@@ -48,19 +47,8 @@ async def execute_non_query(query, params=None):
     Execute a non-query command (e.g., INSERT, UPDATE, DELETE) 
     and return a bool: True if the execution is successful, False otherwise.
     """
-    connection = await get_db_connection()
-    if connection is None:
-        return False
-    try:
-        async with connection.cursor() as cursor:
-            await cursor.execute(query, params)
-            await connection.commit()
-        return True
-    except aiomysql.Error as error:
-        print("Error executing non-query:", error)
-        return False
-    finally:
-        connection.close()
+    result = await execute_query(query, params)
+    return result is not None
 
 async def does_food_item_exist(food_item: str) -> bool:
     """
@@ -81,20 +69,19 @@ async def save_order_to_db(order: dict) -> tuple:
         return 0, 0
 
     try:
-        # Get the new order ID
-        query = "SELECT COALESCE(MAX(order_id), 0) + 1 FROM orders"
         async with connection.cursor() as cursor:
+            # Get the new order ID
+            query = "SELECT COALESCE(MAX(order_id), 0) + 1 FROM orders"
             await cursor.execute(query)
             result = await cursor.fetchone()
             new_order_id = result[0]
 
-        # Collect all queries for batch insertion
-        order_queries = []
-        total_order_price = 0
+            # Collect all queries for batch insertion
+            order_queries = []
+            total_order_price = 0
 
-        for item_name, quantity in order.items():
-            query = "SELECT item_id, price FROM food_items WHERE name = %s"
-            async with connection.cursor() as cursor:
+            for item_name, quantity in order.items():
+                query = "SELECT item_id, price FROM food_items WHERE name = %s"
                 await cursor.execute(query, (item_name,))
                 result = await cursor.fetchone()
                 if not result:
@@ -106,17 +93,15 @@ async def save_order_to_db(order: dict) -> tuple:
 
                 order_queries.append((new_order_id, item_id, quantity, total_price))
 
-        # Insert all orders in a batch
-        insert_query = """
-            INSERT INTO orders (order_id, item_id, quantity, total_price)
-            VALUES (%s, %s, %s, %s)
-        """
-        async with connection.cursor() as cursor:
+            # Insert all orders in a batch
+            insert_query = """
+                INSERT INTO orders (order_id, item_id, quantity, total_price)
+                VALUES (%s, %s, %s, %s)
+            """
             await cursor.executemany(insert_query, order_queries)
 
-        # Insert order tracking
-        tracking_query = "INSERT INTO order_tracking (order_id, status) VALUES (%s, %s)"
-        async with connection.cursor() as cursor:
+            # Insert order tracking
+            tracking_query = "INSERT INTO order_tracking (order_id, status) VALUES (%s, %s)"
             await cursor.execute(tracking_query, (new_order_id, 'in progress'))
 
         await connection.commit()
@@ -126,7 +111,6 @@ async def save_order_to_db(order: dict) -> tuple:
         return 0, 0
     finally:
         connection.close()
-
 
 async def get_order_status(order_id):
     """
