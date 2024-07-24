@@ -64,7 +64,7 @@ uma_food_chatbot/
 
 3. **Configure and Import Database Schema**:
 
-    - Rename `.env_sample` to `.env` and update the environment variables with your configuration.
+    - Rename `.env.example` to `.env` and update the environment variables with your configuration.
     - Import `uma_food_chatbot.sql` from the `setup` folder using the client's import feature.
 
 
